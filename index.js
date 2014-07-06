@@ -1,10 +1,11 @@
 var fs = require('fs')
 var play = require('lib/play')
+var through = require('through')
 var express = require('express')
+var duplexer = require('duplexer')
 var bitrate = require('lib/bitrate')
 var library = require('lib/library')
 var fileStreamer = require('lib/file-streamer')
-
 
 var app = express()
 app.engine('html', require('ejs').renderFile)
@@ -13,21 +14,13 @@ app.get('/', function(req, res) {
   res.render('index.html');
 })
 
+var streamer = through(function(buf) {
+  this.queue(buf)
+});
 
-// app.get('/info', function(req, res){
-//   var filepath = 'files/test.mp3'
-//   var stat = fs.statSync(filepath)
-//   bitrate(filepath, function(err, bitrate) {
-//     res.send('Info: '+ bitrate + '\nSize: ' + stat.size);
-//   })
-// })
-
-
-
-var play = null;
 
 //-- Setup the Grammophone --------------------------------------------------
-library.list('/files', function(err, songs) {
+library.list('/files', function(err, songs, res) {
 
   var i = 0
   startPlay(songs[i])
@@ -37,18 +30,12 @@ library.list('/files', function(err, songs) {
       if(i == songs.length) {
         i = 0
       }
-      i++
       startPlay(songs[i])
-    })
+      i++
+    }).pipe(streamer, {end: false})
   }
 
 });
-
-
-
-// var filepath = 'files/test.mp3'
-// // (128 * 1024)
-// var streamer = fileStreamer(filepath, 16000)
 
 
 app.get('/stream.mp3', function(req, res) {
@@ -56,10 +43,14 @@ app.get('/stream.mp3', function(req, res) {
     'Content-Type':              'audio/mpeg',
     'Content-Transfer-Encoding': 'binary'
   })
-  play.pipe(res)
-  // streamer.pipe(res)
+  if(streamer) {
+    // duplexer(streamer, res)
+    streamer.pipe(res)
+  }else{
+    console.log('CLOSING CONNECTIONG')
+    res.end('No streaming today gang')
+  }
 })
-
 
 var server = app.listen(3000, function() {
   console.log('Listening on port %d', server.address().port)
