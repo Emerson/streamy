@@ -1,11 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="Streamy">
   <head>
     <title>Streamy</title>
+    <script src="angular/angular.js"></script>
+    <script src="dist/js/application.js"></script>
+    <link href="dist/css/vendor.css" type="text/css" rel="stylesheet">
+    <style>
+      .trackinfo {
+        padding: 20px;
+        margin: 50px auto;
+        max-width: 80%;
+        background: #efefef;
+        border-radius: 2px;
+      }
+    </style>
   </head>
   <body>
-    <h1>Streamy</h1>
-    <audio src="http://10.11.83.20:3000/stream.mp3" autoplay>
-    </audio>
+
+    <nav class="top-bar" data-topbar>
+      <ul class="title-area">
+        <li class="name">
+          <h1><a href="#">Hot n' Streamy</a></h1>
+        </li>
+      </ul>
+    </nav>
+
+    <div class="trackinfo">
+
+      <div ng-controller="TrackInfoController">
+        You are listening to: {{socket.currentTrackName}}<br>
+        Socket: {{socket.status}}
+      </div>
+
+      <audio src="http://0.0.0.0:3000/stream.mp3" autoplay> 
+      </audio>
+
+    </div>
+
   </body>
 </html>
